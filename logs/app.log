@@ -1,0 +1,4 @@
+2025-02-10 10:01:01 INFO Starting service
+2025-02-10 10:02:11 ERROR DB connection failed
+2025-02-10 10:02:45 WARNING High memory usage
+2025-02-10 10:04:01 INFO Service running
