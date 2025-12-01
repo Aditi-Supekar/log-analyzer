@@ -1,25 +1,45 @@
+# src/monitor.py
+import csv
 import json
 import time
-from parser import parse_log_line
+from datetime import date
 
-from notifier import send_slack_alert
+import schedule
 
+from .notifier import send_alert
+from .parser import parse_log
 
-def tail_log(logfile, webhook):
-    with open(logfile, "r") as f:
-        f.seek(0, 2)  # Move to end of file
-        while True:
-            line = f.readline()
-            if not line:
-                time.sleep(1)
-                continue
+# Load configuration
+with open("config.json") as f:
+    config = json.load(f)
 
-            log_type = parse_log_line(line)
+log_file = config["log_file"]
+webhook_url = config["webhook_url"]
+metrics_file = config["metrics_file"]
+error_threshold = config["error_threshold"]
 
-            if log_type == "ERROR":
-                send_slack_alert(webhook, f"🚨 New ERROR found: {line.strip()}")
-                print("Error alert sent!")
+def save_metrics(errors, warnings, info):
+    today = date.today().isoformat()
+    try:
+        with open(metrics_file, "a", newline="") as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow([today, errors, warnings, info])
+    except Exception as e:
+        print("Error writing metrics:", e)
 
-if __name__ == "__main__":
-    config = json.load(open("config.json"))
-    tail_log(config["log_file"], config["slack_webhook"])
+def monitor_logs():
+    errors, warnings, info = parse_log(log_file)
+    print(f"Errors: {errors}, Warnings: {warnings}, Info: {info}")
+    
+    if errors >= error_threshold:
+        send_alert(webhook_url, f"{errors} errors detected!")
+    
+    save_metrics(errors, warnings, info)
+
+# Run every 1 minute
+schedule.every(1).minutes.do(monitor_logs)
+
+print("Log monitor started...")
+while True:
+    schedule.run_pending()
+    time.sleep(1)

@@ -1,4 +1,6 @@
 {
+    "webhook_url": "https://webhook.site/4da2224c-824c-497b-89db-b9a81f48752f",
+    "error_threshold": 1,
     "log_file": "logs/app.log",
-    "slack_webhook": "https://hooks.slack.com/services/XXXXX/YYYY/ZZZZ"
+    "metrics_file": "metrics/daily_metrics.csv"
 }
